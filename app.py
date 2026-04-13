@@ -3,11 +3,19 @@ import os
 from flask import Flask, jsonify, request
 from openai import OpenAI
 from dotenv import load_dotenv
+from rag import init_collection, retrieve
 
 load_dotenv()
 
 app = Flask(__name__)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# RAG 컬렉션 초기화 (앱 시작 시 1회)
+_rag_collection = None
+try:
+    _rag_collection = init_collection(os.getenv("OPENAI_API_KEY"))
+except Exception as e:
+    print(f"[RAG] 초기화 실패 (RAG 없이 동작): {e}")
 
 DEED_SYSTEM_PROMPT = """당신은 대한민국 부동산 등기부등본 분석 전문가입니다.
 이 서비스의 목적은 전세·월세 계약을 앞둔 임차인이 사기 피해를 입지 않도록, 등기부등본에서 위험 신호를 사전에 발견하는 것입니다.
@@ -272,7 +280,14 @@ def analyze_deed():
     if not sections or not isinstance(sections, dict):
         return jsonify({"error": "'sections' field is required and must be an object"}), 400
 
-    user_prompt = _build_user_prompt(sections)
+    rag_context = ""
+    if _rag_collection is not None:
+        try:
+            rag_context = retrieve(_rag_collection, sections)
+        except Exception as e:
+            print(f"[RAG] 검색 실패 (RAG 없이 분석): {e}")
+
+    user_prompt = _build_user_prompt(sections, rag_context)
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
@@ -298,12 +313,18 @@ def analyze_deed():
     })
 
 
-def _build_user_prompt(sections: dict) -> str:
+def _build_user_prompt(sections: dict, rag_context: str = "") -> str:
     parts = []
     for section_name, lines in sections.items():
         content = "\n".join(lines) if isinstance(lines, list) else str(lines)
         parts.append(f"[{section_name}]\n{content}")
     sections_text = "\n\n".join(parts)
+
+    if rag_context:
+        return (
+            f"[관련 법령 및 위험 패턴 참고 자료]\n{rag_context}\n\n"
+            f"위 참고 자료를 바탕으로 다음 등기부등본 데이터를 분석해주세요:\n\n{sections_text}"
+        )
     return f"다음 등기부등본 데이터를 분석해주세요:\n\n{sections_text}"
 
 
