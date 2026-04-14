@@ -52,12 +52,64 @@ OPENAI_API_KEY=sk-...
 
 ## 실행
 
+### 가상환경 설정 (권장)
+
 ```bash
+python -m venv venv
+source venv/bin/activate      # Windows: venv\Scripts\activate
 pip install -r requirements.txt
+```
+
+### 서버 시작
+
+```bash
 python app.py
 ```
 
 서버가 `http://localhost:5000`에서 실행됩니다.
+
+### 전체 실행 순서
+
+이 서버는 `project-safehome-api`(Spring Boot)보다 **먼저** 시작해야 합니다.
+
+```bash
+# 1. AI API 먼저 시작 (본 서비스)
+cd project-safehome-ai-api && python app.py
+
+# 2. API 서버 시작
+cd project-safehome-api && ./gradlew bootRun
+
+# 3. App 시작
+cd project-safehome-app && npm run web
+```
+
+## 로컬 테스트
+
+### 서버 상태 확인
+
+```bash
+curl http://localhost:5000/health
+```
+
+```json
+{ "status": "ok" }
+```
+
+### 등기부등본 분석 직접 호출
+
+```bash
+curl -X POST http://localhost:5000/api/deed/analyze \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sections": {
+      "표제부": ["[집합건물] 서울특별시 마포구 망원동 123-4", "전유부분 면적: 59.91㎡"],
+      "갑구": ["순위1. 소유권보존 홍길동 2020.03.15"],
+      "을구": ["순위1. 근저당권설정 채권최고액 금1억2천만원 국민은행 2020.04.01"]
+    }
+  }'
+```
+
+> `OPENAI_API_KEY`가 `.env`에 설정되어 있어야 합니다. ChromaDB는 첫 실행 시 자동으로 초기화됩니다.
 
 ---
 

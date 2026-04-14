@@ -65,6 +65,10 @@ db.sqlite3-journal
 instance/
 .webassets-cache
 
+# ChromaDB 벡터 저장소 (첫 실행 시 자동 생성)
+chroma_db/
+test_chroma/
+
 # Scrapy stuff:
 .scrapy
 
