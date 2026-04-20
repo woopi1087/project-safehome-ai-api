@@ -57,7 +57,8 @@ project-safehome-ai-api/
     "표제부": ["line1", "line2"],
     "갑구": ["line1", ...],
     "을구": ["line1", ...]
-  }
+  },
+  "leaseType": "전세 또는 월세 (optional)"
 }
 ```
 
@@ -72,8 +73,21 @@ project-safehome-ai-api/
     "mortgageInfo": { ... },
     "otherRights": [ ... ],
     "legalRisks": [ ... ],
-    "safetyChecklist": [ ... ],
     "keyRiskPoints": [ ... ],
+    "overallRiskSummary": "종합 위험도 요약 (3~5문장)",
+    "leaseSpecificAnalysis": {
+      "leaseType": "월세 | 전세 | 미지정",
+      "summary": "임대차 유형별 종합 분석",
+      "checkItems": [
+        {
+          "category": "보증금 안전성 | 계약 전 확인 | 법적 보호 | 등기 권고 | 기타",
+          "title": "확인 사항 제목",
+          "description": "상세 설명",
+          "priority": "필수 | 권장 | 참고"
+        }
+      ]
+    },
+    "safetyChecklist": [ ... ],
     "recommendation": "...",
     "summary": "..."
   },
